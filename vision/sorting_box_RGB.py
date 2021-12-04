@@ -169,7 +169,7 @@ color_goal = set_goal(color_goal, rois)
 # goal_y
 # goal_z
 
-VIDEO_SOURCE = 2
+VIDEO_SOURCE = 0
 cap = cv2.VideoCapture(VIDEO_SOURCE)
 
 while True:
