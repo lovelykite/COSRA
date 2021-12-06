@@ -1,4 +1,5 @@
 import time
+
 import numpy as np
 from numpy import sin, cos
 from scipy.optimize import fsolve
@@ -9,30 +10,28 @@ from dynamixel import dynamixel
 
 dxls = dynamixel()
 dxl_ids = [0, 1, 2, 3]  # ID setting
+
 for i in range(3):
     dxls.enable_torque(dxl_ids[i], True)  # torque enable
 
 # link length a(i-1)
-l1 = 0.080  # J1 ~ J2
-l2 = 0.136  # J2 ~ J3
+l1 = 0.095  # J1 ~ J2
+l2 = 0.150  # J2 ~ J3
 l3 = 0.150  # J3 ~ ee
-lg = 0.023  # gripper height
-h = 0.04  # base height
-
-# link offset di
-d3 = 0.055  # joint3 offset
-beta = np.arctan2(d3, l2)
+lg = 0.112  # gripper size
+lt = 0.050  # tip location
+h  = 0.040  # base height
 
 # joint angle qi
-q = [3.0987, 0.3068, 0.9203]
-
+# q = [3.0987, 0.3068, 0.9203]
+q = [0.5236, 0.5236, 0.5236]
 
 def dhparam(joints):
     q1, q2, q3 = np.array(joints).T
     # dh parameters [alpha, a, d, theta]
     return np.array([[0, 0, 0, q1],
                      [np.pi / 2, l1, 0, q2],
-                     [0, l2, d3, q3],
+                     [-np.pi, l2, 0, q3],
                      [0, l3, 0, 0]])
 
 
@@ -59,12 +58,14 @@ def fk(joints):
     # return Ts, Tbs[-1]  # base to end effector
     return Tbs[-1]
 
+print(fk(q))
+
 # q_cur = [np.pi / 3, np.pi / 3, np.pi / 3]
 
 ### cartesian coordinates ~ joint angle
-# px = d3*sin(q1) + l1*cos(q1) + l2*cos(q1)*cos(q2) + l3*(-sin(q2)*sin(q3)*cos(q1) + cos(q1)*cos(q2)*cos(q3))
-# py = -d3*cos(q1) + l1*sin(q1) + l2*sin(q1)*cos(q2) + l3*(-sin(q1)*sin(q2)*sin(q3) + sin(q1)*cos(q2)*cos(q3))
-# pz = l2*sin(q2) + l3*(sin(q2)*cos(q3) + sin(q3)*cos(q2))
+# px = l1 * cos(q1) + l2 * cos(q1) * cos(q2) + l3 * (sin(q2) * sin(q3) * cos(q1) + cos(q1) * cos(q2) * cos(q3))
+# py = l1 * sin(q1) + l2 * sin(q1) * cos(q2) + l3 * (sin(q1) * sin(q2) * sin(q3) + sin(q1) * cos(q2) * cos(q3))
+# pz = l2 * sin(q2) + l3 * (sin(q2) * cos(q3) - sin(q3) * cos(q2))
 
 def ik(q, *cart_des):
     x, y, z = cart_des
@@ -72,25 +73,21 @@ def ik(q, *cart_des):
     q1, q2, q3 = q
     F = np.empty((3))
 
-    F[0] = d3 * sin(q1) + l1 * cos(q1) + l2 * cos(q1) * cos(q2) + l3 * (
-            -sin(q2) * sin(q3) * cos(q1) + cos(q1) * cos(q2) * cos(q3)) - x
-    F[1] = -d3 * cos(q1) + l1 * sin(q1) + l2 * sin(q1) * cos(q2) + l3 * (
-            -sin(q1) * sin(q2) * sin(q3) + sin(q1) * cos(q2) * cos(q3)) - y
-    F[2] = l2 * sin(q2) + l3 * (sin(q2) * cos(q3) + sin(q3) * cos(q2)) - z
+    F[0] = l1 * cos(q1) + l2 * cos(q1) * cos(q2) + l3 * (sin(q2) * sin(q3) * cos(q1) + cos(q1) * cos(q2) * cos(q3)) - x
+    F[1] = l1 * sin(q1) + l2 * sin(q1) * cos(q2) + l3 * (sin(q1) * sin(q2) * sin(q3) + sin(q1) * cos(q2) * cos(q3)) - y
+    F[2] = l2 * sin(q2) + l3 * (sin(q2) * cos(q3) - sin(q3) * cos(q2)) - z
     # print(q)
     return F
 
 
-# cart_des = (8.41313972e-02, 3.57198545e-02, 2.47683265e-01)
-# q_cur = [0.96, 0.96, 0.96]
+# cart_des = (0.32468, 0.18745, 0.075)
+# q_cur = [0.3, 0.3, 0.3]
 # qk = fsolve(ik(cart_des), q_cur)
 # q = fsolve(ik, x0=q_cur, args=cart_des)
 # print(q)
 
 
 def pickNplace(start=[], goal=[]):
-
-
     t = 0.0
     tf = 3.0
     gripAngle = 333  # 그리퍼가 물체 잡기 위해 필요한 각도 (0~4095)
@@ -104,12 +101,8 @@ def pickNplace(start=[], goal=[]):
 
     cart_pick = np.array(start)  # pick 해야 하는 물체의 cartesian
     # print(cart_pick)
-    # print(start[:2])
-    # print(start[2])
-    # print(start[2] + 0.04)
     cart_via1 = np.array(start)
     cart_via1[2] += 0.04
-    # cart_via1 = np.concatenate((start[:2], np.array(start[2] + 0.04)))
     # print(cart_via1)
     cart_place = np.array(goal)  # place 해야 하는 곳의 cartesian
     # print(cart_place)
@@ -139,7 +132,7 @@ def pickNplace(start=[], goal=[]):
     # Trajectory 7: Home coming
     traj_s7, t7 = Trajectory.LSPB(q0=cart_via2, qf=cart_home, tf=tf, tb=tf / 3)
 
-    """ Joint Trajectories using IK """    
+    """ Joint Trajectories using IK """
 
     move_joint(traj_s1, t1, "1", cart_pick, gripAngle, ungripAngle)
 
@@ -155,7 +148,8 @@ def pickNplace(start=[], goal=[]):
 
     move_joint(traj_s7, t7, "7", cart_pick, gripAngle, ungripAngle)
 
-def move_joint(traj_s, t, pos_num, cart_pick, gripAngle, ungripAngle, grip = 0):
+
+def move_joint(traj_s, t, pos_num, cart_pick, gripAngle, ungripAngle, grip=0):
     print("move position " + pos_num)
     for i in range(len(t)):
         start_time = time.time()
@@ -175,7 +169,7 @@ def move_joint(traj_s, t, pos_num, cart_pick, gripAngle, ungripAngle, grip = 0):
             ''' Grip '''
             if np.linalg.norm(cart_cur - cart_pick) < 10e-4:
                 dxls.set_pos(dxl_ids[3], gripAngle)
-        
+
         elif grip == 2:
             cart_cur = cosraKinematics.fk(joints=q_cur)[:3, -1]  # home position EE cartesian
 
@@ -184,8 +178,6 @@ def move_joint(traj_s, t, pos_num, cart_pick, gripAngle, ungripAngle, grip = 0):
                 dxls.set_pos(dxl_ids[3], ungripAngle)
         else:
             pass
-
-
 
 
 def dxlPos2rad(pos=[]):
@@ -206,9 +198,11 @@ def homePosition():
     # print(dxls.get_pos_sync(dxl_ids))
 
 
-cart_start = [0.2, 0.2, 0.02]
-cart_goal = [-0.2, 0.1, 0.02]
+cart_start = [0.18, 0.15, 0.02]
+cart_goal = [0.18, -0.15, 0.02]
 
 HomeFlag = False
 pickNplace(start=cart_start, goal=cart_goal)
 HomeFlag = True
+time.sleep(2)
+homePosition()
