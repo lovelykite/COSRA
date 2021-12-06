@@ -1,22 +1,24 @@
 import numpy as np
 
 """ DH parameters """
-# link lengths [m]
-L1 = 0.1360  # J1 ~ J2
-L2 = 0.1500  # J2 ~ J3
-Lg = 0.0584  # gripper body length
-Lt = 0.045  # gripper tip length
+# link lengths a(i-1) [m]
+l1 = 0.0800 # J1 ~ J2
+l2 = 0.1360 # J2 ~ J3
+l3 = 0.1500 # J3 ~ EE
+lg = 0.0584 # gripper body length
+lt = 0.045  # gripper tip length
+h = 0.04    # base height
 
 # link offsets [m]
-d2 = 0.0550  # elbow offset
+d3 = 0.0550  # joint3 offset
 
 
-def dhparam(joints):
+def dhparam(joints):    # dh parameters [alpha, a, d, theta]
     q1, q2, q3 = np.array(joints).T
-    return np.array([[0, 0, 0, q1],
-                     [np.pi / 2, d2, L1, q2],
-                     [0, 0, L2, q3],
-                     [0, 0, Lg + Lt, 0]])
+    return np.array([[0,          0,  0, q1],
+                     [np.pi / 2, l1,  0, q2],
+                     [0,         l2, d3, q3],
+                     [0,         l3,  0,  0]])
 
 
 # # Joint space limits

@@ -6,7 +6,7 @@ class Trajectory:
         pass
 
     @classmethod
-    def LSPB(cls, q0, qf, tf, tb, t_step=0.01):
+    def LSPB(cls, q0, qf, tf, tb, t_step=0.1):
         q0 = np.array(q0)
         qf = np.array(qf)
         if np.allclose(q0, qf):
