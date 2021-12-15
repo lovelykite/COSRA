@@ -9,9 +9,9 @@ from std_msgs.msg import Int32, Int32MultiArray
 
 dxls = dynamixel()
 dxl_ids = [0, 1, 2, 3]  # ID setting
-dxls = dynamixel()
+# dxls = dynamixel()
 
-for i in range(3):
+for i in range(4):
     dxls.enable_torque(dxl_ids[i], True)  # torque enable
 
 
@@ -24,40 +24,46 @@ def homePosition():
 gripAngle = 1800  # 그리퍼가 물체 잡기 위해 필요한 각도 (0~4095)
 ungripAngle = 2160
 
+def getPosition():
+    joint1 = dxls.get_pos(dxl_ids[0])
+    joint2 = dxls.get_pos(dxl_ids[1])
+    joint3 = dxls.get_pos(dxl_ids[2])
+    joint4 = dxls.get_pos(dxl_ids[3])
+    print("joint1: ", joint1, " joint2: ", joint2, " joint3: ", joint3, " joint4: ", joint4)
 
 def pickNplace(start_idx, goal_idx):
     t = 0.0
     tf = 3.0
 
-    gripAngle = 1800  # 그리퍼가 물체 잡기 위해 필요한 각도 (0~4095)
-    ungripAngle = 2160
+    gripAngle = 1685  # 그리퍼가 물체 잡기 위해 필요한 각도 (0~4095)
+    ungripAngle = 2200
 
     # home
-    home = [1558, 1300, 1948]
+    home = [1460, 1500, 1590]
 
     # 1st
-    upper_1st = [2092, 1737, 1345]  # upper
-    lower_1st = [2092, 1737, 2145]  # lower
+    upper_1st = [2075, 1765, 2165]  # upper
+    lower_1st = [2075, 2048, 2260]  # lower
 
     # 2nd
-    upper_2nd = [2165, 1373, 1764]
-    lower_2nd = [2105, 1361, 1694]
+    upper_2nd = [2225, 1665, 1780]
+    lower_2nd = [2225, 1725, 1610]
 
     # 3rd
-    upper_3rd = [1962, 1562, 2188]
-    lower_3rd = [1962, 1581, 2102]
+    upper_3rd = [1990, 1940, 2180]
+    lower_3rd = [1990, 1990, 2180]
 
     # 4th
-    upper_4th = [1962, 1402, 1765]
-    lower_4th = [1962, 1402, 1663]
+    upper_4th = [1910, 1570, 1725]
+    lower_4th = [1910, 1725, 1545]
 
     # 5th
-    upper_5th = [1838, 1581, 2283]
-    lower_5th = [1838, 1657, 2235]
+    upper_5th = [1815, 1910, 2175]
+    lower_5th = [1815, 2048, 2175]
 
     # 6th
-    upper_6th = [1792, 1186, 1880]
-    lower_6th = [1792, 1424, 1682]
+    upper_6th = [1730, 1640, 1680]
+    lower_6th = [1730, 1815, 1730]
 
     # cart_pick = np.array(start)  # pick 해야 하는 물체의 cartesian
     # print(cart_pick)
@@ -149,9 +155,12 @@ def pickNplace(start_idx, goal_idx):
 
     move_joint(traj_s2, t2, "2")
 
-    for i in range (10):
-        dxls.set_pos(dxl_ids[3], int(gripAngle/10*i))
-        time.sleep(0.1)
+    # for i in range (10):
+    #     dxls.set_pos(dxl_ids[3], int(gripAngle/10*i))
+    #     time.sleep(0.1)
+
+    dxls.set_pos(dxl_ids[3], gripAngle)
+    time.sleep(1)
 
     move_joint(traj_s3, t3, "3")
 
@@ -159,9 +168,12 @@ def pickNplace(start_idx, goal_idx):
 
     move_joint(traj_s5, t5, "5")
 
-    for i in range (10):
-        dxls.set_pos(dxl_ids[3], int(ungripAngle/10*i))
-        time.sleep(0.1)
+    # for i in range (10):
+    #     dxls.set_pos(dxl_ids[3], int(ungripAngle/10*i))
+    #     time.sleep(0.1)
+
+    dxls.set_pos(dxl_ids[3], ungripAngle)
+    time.sleep(1)
 
     move_joint(traj_s6, t6, "6")
 
@@ -181,7 +193,7 @@ def move_joint(traj_s, t, pos_num):
 
 # cart_start = [0.18, 0.15, 0.02]
 # cart_goal = [0.18, -0.15, 0.02]
-start_idx = 1
+start_idx = 4
 goal_idx = 2
 
 start_p = None
@@ -202,6 +214,7 @@ if __name__ == '__main__':
         while True:
             # listen_target()
             pickNplace(start_idx, goal_idx)
+            # getPosition()
             # for i in range(4):
             #     print(dxls.get_pos(i))
             # pickNplace(start_p, goal_p)
