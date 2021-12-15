@@ -1,15 +1,18 @@
 import time
 
 import numpy as np
-
 from Trajectory import Trajectory
 from dynamixel import dynamixel
 
-# dxls = dynamixel()
-dxl_ids = [0, 1, 2, 3]  # ID setting
+import rospy
+from std_msgs.msg import Int32, Int32MultiArray
 
-# for i in range(3):
-#     dxls.enable_torque(dxl_ids[i], True)  # torque enable
+dxls = dynamixel()
+dxl_ids = [0, 1, 2, 3]  # ID setting
+dxls = dynamixel()
+
+for i in range(3):
+    dxls.enable_torque(dxl_ids[i], True)  # torque enable
 
 
 def homePosition():
@@ -17,6 +20,9 @@ def homePosition():
     dxls.set_pos_sync(dxl_ids, homePos)
     # time.sleep(1)
     # print(dxls.get_pos_sync(dxl_ids))
+
+gripAngle = 1800  # 그리퍼가 물체 잡기 위해 필요한 각도 (0~4095)
+ungripAngle = 2160
 
 
 def pickNplace(start_idx, goal_idx):
@@ -27,31 +33,31 @@ def pickNplace(start_idx, goal_idx):
     ungripAngle = 2160
 
     # home
-    home = [1623, 1482, 1719]
+    home = [1558, 1300, 1948]
 
     # 1st
-    upper_1st = [2080, 1845, 2235]  # upper
-    lower_1st = [2094, 1840, 2078]  # lower
+    upper_1st = [2092, 1737, 1345]  # upper
+    lower_1st = [2092, 1737, 2145]  # lower
 
     # 2nd
-    upper_2nd = [2147, 1520, 1740]
-    lower_2nd = [2150, 1530, 1725]
+    upper_2nd = [2165, 1373, 1764]
+    lower_2nd = [2105, 1361, 1694]
 
     # 3rd
-    upper_3rd = [1984, 1730, 2180]
-    lower_3rd = [1984, 1765, 2126]
+    upper_3rd = [1962, 1562, 2188]
+    lower_3rd = [1962, 1581, 2102]
 
     # 4th
-    upper_4th = [1984, 1522, 1734]
-    lower_4th = [1984, 1527, 1692]
+    upper_4th = [1962, 1402, 1765]
+    lower_4th = [1962, 1402, 1663]
 
     # 5th
-    upper_5th = [1839, 1770, 2175]
-    lower_5th = [1839, 1809, 2175]
+    upper_5th = [1838, 1581, 2283]
+    lower_5th = [1838, 1657, 2235]
 
     # 6th
-    upper_6th = [1816, 1542, 1773]
-    lower_6th = [1803, 1562, 1773]
+    upper_6th = [1792, 1186, 1880]
+    lower_6th = [1792, 1424, 1682]
 
     # cart_pick = np.array(start)  # pick 해야 하는 물체의 cartesian
     # print(cart_pick)
@@ -67,16 +73,15 @@ def pickNplace(start_idx, goal_idx):
     goal_upper = np.zeros(3)
     goal_lower = np.zeros(3)
 
-    upper = [upper_1st, upper_2nd, upper_3rd, upper_4th, upper_5th, upper_6th]
-    lower = [lower_1st, lower_2nd, lower_3rd, lower_4th, lower_5th, lower_6th]
+    upper = np.array([upper_1st, upper_2nd, upper_3rd, upper_4th, upper_5th, upper_6th])
+    lower = np.array([lower_1st, lower_2nd, lower_3rd, lower_4th, lower_5th, lower_6th])
 
-    for i in range(6):
-        if start_idx == i:
-            start_upper = upper[i - 1]
-            start_lower = lower[i - 1]
-        if goal_idx == i:
-            goal_upper = upper[i - 1]
-            goal_lower = lower[i - 1]
+    
+    start_upper = upper[start_idx - 1][:]
+    start_lower = lower[start_idx - 1][:]
+
+    goal_upper = upper[goal_idx - 1][:]
+    goal_lower = lower[goal_idx - 1][:]
 
     # if start_idx == 1:
     #     start_upper = upper_1st
@@ -140,47 +145,38 @@ def pickNplace(start_idx, goal_idx):
 
     """ Joint Trajectories """
 
-    move_joint(traj_s1, t1, "1", start_lower, goal_lower, gripAngle, ungripAngle)
+    move_joint(traj_s1, t1, "1")
 
-    move_joint(traj_s2, t2, "2", start_lower, goal_lower, gripAngle, ungripAngle, 1)
+    move_joint(traj_s2, t2, "2")
 
-    move_joint(traj_s3, t3, "3", start_lower, goal_lower, gripAngle, ungripAngle)
+    for i in range (10):
+        dxls.set_pos(dxl_ids[3], int(gripAngle/10*i))
+        time.sleep(0.1)
 
-    move_joint(traj_s4, t4, "4", start_lower, goal_lower, gripAngle, ungripAngle)
+    move_joint(traj_s3, t3, "3")
 
-    move_joint(traj_s5, t5, "5", start_lower, goal_lower, gripAngle, ungripAngle, 2)
+    move_joint(traj_s4, t4, "4")
 
-    move_joint(traj_s6, t6, "6", start_lower, goal_lower, gripAngle, ungripAngle)
+    move_joint(traj_s5, t5, "5")
 
-    move_joint(traj_s7, t7, "7", start_lower, goal_lower, gripAngle, ungripAngle)
+    for i in range (10):
+        dxls.set_pos(dxl_ids[3], int(ungripAngle/10*i))
+        time.sleep(0.1)
+
+    move_joint(traj_s6, t6, "6")
+
+    move_joint(traj_s7, t7, "7")
 
 
-def move_joint(traj_s, t, pos_num, start_lower, goal_lower, gripAngle, ungripAngle, grip=0):
+def move_joint(traj_s, t, pos_num):
     print("move position " + pos_num)
     for i in range(len(t)):
         start_time = time.time()
         for j in range(3):
             # print("traj_s(0): ", traj_s[i][0], "traj_s(1): ", traj_s[i][1], "traj_s(2): ", traj_s[i][2])
-            dxls.set_pos(dxl_ids[j], traj_s[i][j])
+            dxls.set_pos(dxl_ids[j], int(traj_s[i][j]))
+        time.sleep(0.06)
         print("time: ", time.time() - start_time, "traj_s :", traj_s[i])
-
-        if grip == 1:
-            cart_cur = cosraKinematics.fk(joints=q_cur)[:3, -1]  # home position EE cartesian
-            print("current cartesian: ", cart_cur)
-            print("pick cartesian: ", start_lower)
-            ''' Grip '''
-            if np.linalg.norm(cart_cur - start_lower) < 10e-4:
-                dxls.set_pos(dxl_ids[3], gripAngle)
-
-        elif grip == 2:
-            cart_cur = cosraKinematics.fk(joints=q_cur)[:3, -1]  # home position EE cartesian
-            print("current cartesian: ", cart_cur)
-            print("place cartesian: ", goal_lower)
-            ''' Place '''
-            if np.linalg.norm(cart_cur - goal_lower) < 10e-4:
-                dxls.set_pos(dxl_ids[3], ungripAngle)
-        else:
-            pass
 
 
 # cart_start = [0.18, 0.15, 0.02]
@@ -188,19 +184,47 @@ def move_joint(traj_s, t, pos_num, start_lower, goal_lower, gripAngle, ungripAng
 start_idx = 1
 goal_idx = 2
 
-HomeFlag = False
-pickNplace(start_idx, goal_idx)
-HomeFlag = True
-time.sleep(2)
-# homePosition()
+start_p = None
+goal_p = None
 
-#
-# def dxlPos2rad(pos=[]):
-#     # dxl position: 0 ~ 4095 (0 degree at 2048)
-#     joints = 2 * np.array(pos) * np.pi / 4096
-#     return joints
-#
-#
-# def rad2dxlPos(joints=[]):
-#     pos = 4096 * np.array(joints) / (2 * np.pi)
-#     return pos
+def callback_joint(data):
+    global start_p
+    global goal_p
+    start_p = np.array(data.data)[0]
+    goal_p = np.array(data.data)[1]
+
+def listen_target():
+    rospy.init_node('control', anonymous=True)
+    rospy.Subscriber("send_goal", Int32MultiArray, callback_joint)
+
+if __name__ == '__main__':
+    try:
+        while True:
+            # listen_target()
+            pickNplace(start_idx, goal_idx)
+            # for i in range(4):
+            #     print(dxls.get_pos(i))
+            # pickNplace(start_p, goal_p)
+            # for i in range (10):
+            #     dxls.set_pos(dxl_ids[3], int(gripAngle/10*i))
+            #     time.sleep(0.1)
+            # for i in range (10):
+            #     dxls.set_pos(dxl_ids[3], int(ungripAngle/10*i))
+            #     time.sleep(0.1)
+            
+    except KeyboardInterrupt:
+        pass
+
+    
+    # homePosition()
+
+    #
+    # def dxlPos2rad(pos=[]):
+    #     # dxl position: 0 ~ 4095 (0 degree at 2048)
+    #     joints = 2 * np.array(pos) * np.pi / 4096
+    #     return joints
+    #
+    #
+    # def rad2dxlPos(joints=[]):
+    #     pos = 4096 * np.array(joints) / (2 * np.pi)
+    #     return pos
