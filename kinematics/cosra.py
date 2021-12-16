@@ -1,9 +1,18 @@
-"""
-/*** Pick & Place Algorithm ***/
-1. Trajectories:
+""" Pick & Place Algorithm Description
+1. Pick & Place Trajectories:
+1.1.
+1.2.
+1.3.
+1.4.
+1.5.
+1.6.
+1.7.
+1.8.
+1.9.
+1.10.
 
-1.1. Cartesian coordinates
-    - Obtained from
+2. Ceremony
+...
 
 """
 
@@ -22,8 +31,8 @@ from std_msgs.msg import Int32, Int32MultiArray
 
 
 def pickNplace(start_idx, goal_idx, cart=[]):
-    gripAngle   = 1670  # Gripper angle for Grasping  (0 ~ 4095)
-    ungripAngle = 2250  # Gripper angle for Releasing (0 ~ 4095)
+    gripAngle   = 1660  # Gripper angle for Grasping  (0 ~ 4095)
+    ungripAngle = 2300  # Gripper angle for Releasing (0 ~ 4095)
 
     ''' Cartesian Space: Home, Start, Goal, Via points' Cartesian coordinates [x, y, z] '''
     # home = [1460, 1500, 1590]       # home position Joint angle [pulse]
@@ -54,42 +63,77 @@ def pickNplace(start_idx, goal_idx, cart=[]):
     upper_6th = np.array([0.260, -0.122, 0.121])
     lower_6th = np.array([0.220, -0.100, 0.182])
 
+    # Ceremony Positions
+    upper_7th = (upper_1st + upper_2nd) / 2     # 7th
+    upper_8th = (upper_5th + upper_6th) / 2     # 8th
+
+    # Center Position
+    center = (upper_3rd + upper_4th) / 2
+
     upper = np.array([upper_1st, upper_2nd, upper_3rd, upper_4th, upper_5th, upper_6th])
     lower = np.array([lower_1st, lower_2nd, lower_3rd, lower_4th, lower_5th, lower_6th])
 
-    start_upper = upper[start_idx - 1][:]
-    start_lower = lower[start_idx - 1][:]
-    goal_upper  = upper[goal_idx - 1][:]
-    goal_lower  = lower[goal_idx - 1][:]
-
-    ''' Cartesian Trajectories '''
     tf = 3.0  # time interval for Interpolation
-    traj_s1, t1 = Trajectory.LSPB(q0=cart_home,   qf=start_upper, tf=tf, tb=tf / 3)  # Trajectory 1: Home to Start Upper
-    traj_s2, t2 = Trajectory.LSPB(q0=start_upper, qf=start_lower, tf=tf, tb=tf / 3)  # Trajectory 2: Move to Start Lower
-    traj_s3, t3 = Trajectory.LSPB(q0=start_lower, qf=start_upper, tf=tf, tb=tf / 3)  # Trajectory 3: Move to Start Upper
-    traj_s4, t4 = Trajectory.LSPB(q0=start_upper, qf=goal_upper,  tf=tf, tb=tf / 3)  # Trajectory 4: Move to Goal Upper
-    traj_s5, t5 = Trajectory.LSPB(q0=goal_upper,  qf=goal_lower,  tf=tf, tb=tf / 3)  # Trajectory 5: Move to Goal Lower
-    traj_s6, t6 = Trajectory.LSPB(q0=goal_lower,  qf=goal_upper,  tf=tf, tb=tf / 3)  # Trajectory 6: Move to Goal Upper
-    traj_s7, t7 = Trajectory.LSPB(q0=goal_upper,  qf=cart_home,   tf=tf, tb=tf / 3)  # Trajectory 7: Goal Upper to Home
 
-    ''' Joint Trajectories: Dynamixel Operation '''
-    move_joint(traj_s1, t1, "1")
-    move_joint(traj_s2, t2, "2")
+    if start_idx == 7 and goal_idx == 8:
+        ''' Ceremony '''
+        traj_sc1, tc1 = Trajectory.LSPB(q0=cart_home, qf=upper_7th, tf=tf, tb=tf / 3)
+        traj_sc2, tc2 = Trajectory.LSPB(q0=upper_7th, qf=upper_8th, tf=tf, tb=tf / 3)
+        traj_sc3, tc3 = Trajectory.LSPB(q0=upper_8th, qf=upper_7th, tf=tf, tb=tf / 3)
+        traj_sc4, tc4 = Trajectory.LSPB(q0=upper_7th, qf=upper_8th, tf=tf, tb=tf / 3)
+        traj_sc5, tc5 = Trajectory.LSPB(q0=upper_8th, qf=cart_home, tf=tf, tb=tf / 3)
 
-    # Pick
-    dxls.set_pos(dxl_ids[3], gripAngle)
-    time.sleep(1)
+        move_joint(traj_sc1, tc1, "1")
+        move_joint(traj_sc2, tc2, "2")
+        move_joint(traj_sc3, tc3, "3")
+        move_joint(traj_sc4, tc4, "4")
+        move_joint(traj_sc5, tc5, "5")
 
-    move_joint(traj_s3, t3, "3")
-    move_joint(traj_s4, t4, "4")
-    move_joint(traj_s5, t5, "5")
+        dxls.close_port()
+        return
+    else:
+        start_upper = upper[start_idx - 1][:]
+        start_lower = lower[start_idx - 1][:]
+        goal_upper  = upper[goal_idx - 1][:]
+        goal_lower  = lower[goal_idx - 1][:]
 
-    # Place
-    dxls.set_pos(dxl_ids[3], ungripAngle)
-    time.sleep(1)
+        ''' Cartesian Trajectories '''
+        traj_s1, t1 = Trajectory.LSPB(q0=cart_home, qf=center, tf=tf, tb=tf / 3)  # Path 1: Home to Center
+        traj_s2, t2 = Trajectory.LSPB(q0=center, qf=start_upper, tf=tf, tb=tf / 3)  # Path 2: Center to Start upper
+        traj_s3, t3 = Trajectory.LSPB(q0=start_upper, qf=start_lower, tf=tf,
+                                      tb=tf / 3)  # Path 3: Start upper to Start lower
+        traj_s4, t4 = Trajectory.LSPB(q0=start_lower, qf=start_upper, tf=tf,
+                                      tb=tf / 3)  # Path 4: Start lower to Start upper
+        traj_s5, t5 = Trajectory.LSPB(q0=start_upper, qf=center, tf=tf, tb=tf / 3)  # Path 5: Start upper to Center
+        traj_s6, t6 = Trajectory.LSPB(q0=center, qf=goal_upper, tf=tf, tb=tf / 3)  # Path 6: Cetner to Goal upper
+        traj_s7, t7 = Trajectory.LSPB(q0=goal_upper, qf=goal_lower, tf=tf,
+                                      tb=tf / 3)  # Path 7: Goal upper to Goal lower
+        traj_s8, t8 = Trajectory.LSPB(q0=goal_lower, qf=goal_upper, tf=tf,
+                                      tb=tf / 3)  # Path 8: Goal lower to Goal upper
+        traj_s9, t9 = Trajectory.LSPB(q0=goal_upper, qf=center, tf=tf, tb=tf / 3)  # Path 9: Goal upper to Center
+        traj_s10, t10 = Trajectory.LSPB(q0=center, qf=cart_home, tf=tf, tb=tf / 3)  # Path 10: Center to Home
 
-    move_joint(traj_s6, t6, "6")
-    move_joint(traj_s7, t7, "7")
+        ''' Joint Trajectories: Dynamixel Operation '''
+        move_joint(traj_s1, t1, "1")
+        move_joint(traj_s2, t2, "2")
+        move_joint(traj_s3, t3, "3")
+
+        # Pick
+        dxls.set_pos(dxl_ids[3], gripAngle)
+        time.sleep(1)
+
+        move_joint(traj_s4, t4, "4")
+        move_joint(traj_s5, t5, "5")
+        move_joint(traj_s6, t6, "6")
+        move_joint(traj_s7, t7, "7")
+
+        # Place
+        dxls.set_pos(dxl_ids[3], ungripAngle)
+        time.sleep(1)
+
+        move_joint(traj_s8, t8, "8")
+        move_joint(traj_s9, t9, "9")
+        move_joint(traj_s10, t10, "10")
 
 
 def move_joint(traj_s, t, pos_num):
@@ -136,11 +180,6 @@ def rad2dxlPos(joints=[]):
     return pos
 
 
-# def initPosition():
-#     initJoint = dxls.get_pos_sync(dxl_ids)
-#     return initJoint
-
-
 def callback_joint(data):
     global start_p
     global goal_p
@@ -165,9 +204,6 @@ if __name__ == '__main__':
     initJoint = dxls.get_pos_sync(dxl_ids)
     dxls.set_pos_sync(dxl_ids, initJoint)
 
-    # cart_init = cosraKinematics.fk(dxlPos2rad(initPosition()[:3]))[:3, -1]
-    # print("Initial [x, y, z] : ", np.round(cart_init, 3))
-
     ''' Move from Initial Position to Home Position '''
     homePosition = [1460, 1400, 1750, 2250]  # pulse value for each joints
 
@@ -178,12 +214,11 @@ if __name__ == '__main__':
         # start_time = time.time()
         q_home = dxls.get_pos_sync(dxl_ids)[:3]                     # pulse value for each joints in trajectories
         cart_home = cosraKinematics.fk(dxlPos2rad(q_home))[:3, -1]  # home cartesian coordinates
-        # cart_home = cosraKinematics.fk(dxlPos2rad(dxls.get_pos_sync(dxl_ids)[:3]))[:3, -1]
 
         for j in range(4):
             dxls.set_pos(dxl_ids[j], int(traj_s0[i][j]))
         # print("time: ", round(time.time() - start_time, 4), "traj_s :", np.round(traj_s0[i], 4))
-    print("q_home: ", q_home)
+    # print("q_home: ", q_home)
     print("Home [x, y, z] : ", np.round(cart_home, 3))
 
     start_idx = 6
