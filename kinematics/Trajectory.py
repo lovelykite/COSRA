@@ -6,7 +6,35 @@ class Trajectory:
         pass
 
     @classmethod
-    def LSPB(cls, q0, qf, tf, tb, t_step=0.1):
+    def cubic(cls, q0, qf, v0, vf, tf, t_step=0.01):
+        q0 = np.array(q0)
+        qf = np.array(qf)
+        v0 = np.array(v0)
+        vf = np.array(vf)
+        if np.allclose(q0, qf):
+            t = [0.0]
+            q_pos = [qf]
+            return q_pos, t
+
+        # Define coefficients
+        a0 = q0
+        a1 = v0
+        a2 = 3*(qf-q0)/(tf**2) - 2/tf*v0 - 1/tf*vf
+        a3 = -2*(qf-q0)/(tf**3) + 1/(tf**2)*(v0+vf)
+
+        # Calculate trajectories
+        t = np.arange(start=0.0, stop=tf, step=t_step).reshape(-1, 1)
+
+        # joint traj.
+        q_pos = a0 + a1*t + a2*t**2 + a3*t**3
+        q_vel = a1 + 2*a2*t + 3*a3*t**2
+        q_acc = 2*a2 + 6*a3*t
+        assert ~np.isnan(t).any()
+        assert ~np.isnan(q_pos).any()
+        return q_pos, t
+
+    @classmethod
+    def LSPB(cls, q0, qf, tf, tb, t_step=0.07):
         q0 = np.array(q0)
         qf = np.array(qf)
         if np.allclose(q0, qf):
