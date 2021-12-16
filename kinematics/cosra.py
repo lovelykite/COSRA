@@ -162,9 +162,6 @@ if __name__ == '__main__':
         dxls.enable_torque(dxl_ids[i], True)  # Torque Enable
 
     ''' Initial Position Setting '''
-    # initPosition()
-    # dxls.set_pos_sync(dxl_ids, initPosition())
-
     initJoint = dxls.get_pos_sync(dxl_ids)
     dxls.set_pos_sync(dxl_ids, initJoint)
 
@@ -175,7 +172,7 @@ if __name__ == '__main__':
     homePosition = [1460, 1400, 1750, 2250]  # pulse value for each joints
 
     tf0 = 3.  # time interval for Interpolation
-    traj_s0, t0 = Trajectory.LSPB(q0=initPosition(), qf=homePosition, tf=tf0, tb=tf0 / 3)
+    traj_s0, t0 = Trajectory.LSPB(q0=initJoint, qf=homePosition, tf=tf0, tb=tf0 / 3)
 
     for i in range(len(t0)):
         # start_time = time.time()
