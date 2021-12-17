@@ -103,13 +103,15 @@ def sorting_box(color_goal, frame):
                     temp[0:2] = 0
                     wrong = np.where(temp[:] == 1)
                     cv2.putText(frame, 'Move RED', (310, 30), font, 1, (0, 0, 255), 3)
-                    cv2.imshow('frame', frame)
+                    # cv2.imshow('frame', frame)
+                    cv2.imshow('color', frame)
                     print("Move RED")
                     start = color_goal[1, wrong[0][0]]
                 else:
                     wrong = np.where((color_goal[0, :] != 0) & (color_goal[0, :] != 1))
                     cv2.putText(frame, 'Move Other Color', (310, 30), font, 1, (0, 0, 0), 3)
-                    cv2.imshow('frame', frame)
+                    # cv2.imshow('frame', frame)
+                    cv2.imshow('color', frame)
                     print("Move Other Color")
                     start = color_goal[1, np.random.choice(wrong[0][:], 1)]
             elif empty[0][0] == 2 or empty[0][0] == 3:
@@ -117,13 +119,15 @@ def sorting_box(color_goal, frame):
                     temp[2:4] = 0
                     wrong = np.where((temp[:] == 2) | (temp[:] == 2))
                     cv2.putText(frame, 'Move GREEN', (310, 30), font, 1, (0, 255, 0), 3)
-                    cv2.imshow('frame', frame)
+                    # cv2.imshow('frame', frame)
+                    cv2.imshow('color', frame)
                     print("Move GREEN")
                     start = color_goal[1, wrong[0][0]]
                 else:
                     wrong = np.where((color_goal[0, :] != 0) & (color_goal[0, :] != 2))
                     cv2.putText(frame, 'Move Other Color', (310, 30), font, 1, (0, 0, 0), 3)
-                    cv2.imshow('frame', frame)
+                    # cv2.imshow('frame', frame)
+                    cv2.imshow('color', frame)
                     print("Move Other Color")
                     start = color_goal[1, np.random.choice(wrong[0][:], 1)]
             else:
@@ -131,13 +135,15 @@ def sorting_box(color_goal, frame):
                     temp[4:] = 0
                     wrong = np.where(temp[:] == 3)
                     cv2.putText(frame, 'Move BLUE', (310, 30), font, 1, (255, 0, 0), 3)
-                    cv2.imshow('frame', frame)
+                    # cv2.imshow('frame', frame)
+                    cv2.imshow('color', frame)
                     print("Move BLUE")
                     start = color_goal[1, wrong[0][0]]
                 else:
                     wrong = np.where((color_goal[0, :] != 0) & (color_goal[0, :] != 3))
                     cv2.putText(frame, 'Move Other Color', (310, 30), font, 1, (0, 0, 0), 3)
-                    cv2.imshow('frame', frame)
+                    # cv2.imshow('frame', frame)
+                    cv2.imshow('color', frame)
                     print("Move Other Color") 
                     start = color_goal[1, np.random.choice(wrong[0][:], 1)]
             
@@ -149,16 +155,19 @@ def sorting_box(color_goal, frame):
             return start, goal
         except:
             cv2.putText(frame, 'Make an empty space!', (310, 30), font, 1, (0, 0, 0), 3)
-            cv2.imshow('frame', frame)
+            # cv2.imshow('frame', frame)
+            cv2.imshow('color', frame)
             print("Make an empty space!")        
 
     else:
         cv2.putText(frame, 'Complete!', (310, 30), font, 1, (0, 0, 0), 3)
-        cv2.imshow('frame', frame)
+        # cv2.imshow('frame', frame)
+        cv2.imshow('color', frame)
         print ("Sorting Box Complete!")
-        # start = None
-        # goal = None
-        # return start, goal
+        start = 7
+        goal = 8
+        send_joints(start, goal)
+        return start, goal
         
 # find parameters with Trackbar
 # cv2.namedWindow('parameters')
@@ -208,7 +217,7 @@ def send_joints(start, goal):
         pass
 
 
-VIDEO_SOURCE = 2
+VIDEO_SOURCE = 0
 cap = cv2.VideoCapture(VIDEO_SOURCE)
 
 flag = 0
@@ -231,8 +240,8 @@ if __name__ == '__main__':
         # max = cv2.getTrackbarPos('Max pixels', 'parameters')
         # lowThreshold = cv2.getTrackbarPos('Threshold1', 'parameters')
         # highThreshold = cv2.getTrackbarPos('Threshold2', 'parameters')
-        min = 600
-        max = 1500
+        min = 500
+        max = 1600
         lowThreshold = 186
         highThreshold = 122
 
