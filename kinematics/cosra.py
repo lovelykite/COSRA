@@ -1,18 +1,9 @@
-""" Pick & Place Algorithm Description
-1. Pick & Place Trajectories:
-1.1.
-1.2.
-1.3.
-1.4.
-1.5.
-1.6.
-1.7.
-1.8.
-1.9.
-1.10.
+"""
+/*** Pick & Place Algorithm ***/
+1. Trajectories:
 
-2. Ceremony
-...
+1.1. Cartesian coordinates
+    - Obtained from
 
 """
 
@@ -28,6 +19,7 @@ from dynamixel import dynamixel
 
 import rospy
 from std_msgs.msg import Int32, Int32MultiArray
+import threading
 
 
 def pickNplace(start_idx, goal_idx, cart=[]):
@@ -40,12 +32,12 @@ def pickNplace(start_idx, goal_idx, cart=[]):
     # print("cart_home: ", cart_home)
 
     # 1st
-    upper_1st = np.array([0.313, 0.025, 0.168])  # upper
-    lower_1st = np.array([0.282, 0.022, 0.218])  # lower
+    upper_1st = np.array([0.313, 0.035, 0.170])  # upper
+    lower_1st = np.array([0.282, 0.032, 0.220])  # lower
 
     # 2nd
-    upper_2nd = np.array([0.288, 0.032, 0.137])
-    lower_2nd = np.array([0.231, 0.037, 0.155])
+    upper_2nd = np.array([0.298, 0.042, 0.127])
+    lower_2nd = np.array([0.241, 0.047, 0.165])
 
     # 3rd
     upper_3rd = np.array([0.310, -0.034, 0.179])
@@ -56,12 +48,12 @@ def pickNplace(start_idx, goal_idx, cart=[]):
     lower_4th = np.array([0.240, -0.037, 0.154])
 
     # 5th
-    upper_5th = np.array([0.300, -0.089, 0.180])
-    lower_5th = np.array([0.280, -0.084, 0.208])
+    upper_5th = np.array([0.300, -0.110, 0.180])
+    lower_5th = np.array([0.280, -0.105, 0.208])
 
     # 6th
-    upper_6th = np.array([0.260, -0.122, 0.121])
-    lower_6th = np.array([0.220, -0.100, 0.182])
+    upper_6th = np.array([0.270, -0.120, 0.101])
+    lower_6th = np.array([0.200, -0.090, 0.182])
 
     # Ceremony Positions
     upper_7th = (upper_1st + upper_2nd) / 2     # 7th
@@ -180,6 +172,13 @@ def rad2dxlPos(joints=[]):
     return pos
 
 
+def initPosition():
+    initJoint = dxls.get_pos_sync(dxl_ids)
+    return initJoint
+
+start_p = None
+goal_p = None
+
 def callback_joint(data):
     global start_p
     global goal_p
@@ -188,46 +187,70 @@ def callback_joint(data):
 
 
 def listen_target():
-    rospy.init_node('control', anonymous=True)
+    
     rospy.Subscriber("send_goal", Int32MultiArray, callback_joint)
+    rospy.spin()
 
 
 if __name__ == '__main__':
-    ''' Dynamixel Setting '''
-    dxls = dynamixel()
-    dxl_ids = [0, 1, 2, 3]  # ID setting
+    rospy.init_node('control', anonymous=True)
 
-    for i in range(4):
-        dxls.enable_torque(dxl_ids[i], True)  # Torque Enable
+    listener = threading.Thread(target = listen_target)
+    listener.start()
+    print(start_p, ", ", goal_p)
 
-    ''' Initial Position Setting '''
-    initJoint = dxls.get_pos_sync(dxl_ids)
-    dxls.set_pos_sync(dxl_ids, initJoint)
+    while not rospy.is_shutdown():
 
-    ''' Move from Initial Position to Home Position '''
-    homePosition = [1460, 1400, 1750, 2250]  # pulse value for each joints
+        ''' Dynamixel Setting '''
+        dxls = dynamixel()
+        dxl_ids = [0, 1, 2, 3]  # ID setting
 
-    tf0 = 3.  # time interval for Interpolation
-    traj_s0, t0 = Trajectory.LSPB(q0=initJoint, qf=homePosition, tf=tf0, tb=tf0 / 3)
+        for i in range(4):
+            dxls.enable_torque(dxl_ids[i], True)  # Torque Enable
 
-    for i in range(len(t0)):
-        # start_time = time.time()
-        q_home = dxls.get_pos_sync(dxl_ids)[:3]                     # pulse value for each joints in trajectories
-        cart_home = cosraKinematics.fk(dxlPos2rad(q_home))[:3, -1]  # home cartesian coordinates
+        ''' Initial Position Setting '''
+        # initPosition()
+        # dxls.set_pos_sync(dxl_ids, initPosition())
 
-        for j in range(4):
-            dxls.set_pos(dxl_ids[j], int(traj_s0[i][j]))
-        # print("time: ", round(time.time() - start_time, 4), "traj_s :", np.round(traj_s0[i], 4))
-    # print("q_home: ", q_home)
-    print("Home [x, y, z] : ", np.round(cart_home, 3))
+        initJoint = dxls.get_pos_sync(dxl_ids)
+        dxls.set_pos_sync(dxl_ids, initJoint)
 
-    start_idx = 6
-    goal_idx = 1
+        # cart_init = cosraKinematics.fk(dxlPos2rad(initPosition()[:3]))[:3, -1]
+        # print("Initial [x, y, z] : ", np.round(cart_init, 3))
+
+        ''' Move from Initial Position to Home Position '''
+        homePosition = [1460, 1400, 1750, 2250]  # pulse value for each joints
+
+        tf0 = 3.  # time interval for Interpolation
+        traj_s0, t0 = Trajectory.LSPB(q0=initJoint, qf=homePosition, tf=tf0, tb=tf0 / 3)
+
+        for i in range(len(t0)):
+            # start_time = time.time()
+            q_home = dxls.get_pos_sync(dxl_ids)[:3]                     # pulse value for each joints in trajectories
+            cart_home = cosraKinematics.fk(dxlPos2rad(q_home))[:3, -1]  # home cartesian coordinates
+            # cart_home = cosraKinematics.fk(dxlPos2rad(dxls.get_pos_sync(dxl_ids)[:3]))[:3, -1]
+
+            for j in range(4):
+                dxls.set_pos(dxl_ids[j], int(traj_s0[i][j]))
+            # print("time: ", round(time.time() - start_time, 4), "traj_s :", np.round(traj_s0[i], 4))
+        print("q_home: ", q_home)
+        print("Home [x, y, z] : ", np.round(cart_home, 3))
+
+        print(start_p, ", ", goal_p)
+        pickNplace(start_p, goal_p, cart=cart_home)
+
+    rospy.spin()
+
+    # start_idx = 6
+    # goal_idx = 1
 
     ''' Pick & Place '''
-    try:
-        while True:
-            # listen_target()
-            pickNplace(start_idx, goal_idx, cart=cart_home)
-    except KeyboardInterrupt:
-        pass
+    
+    # try:
+    #     while True:
+    #         listen_target()
+    #         print(start_p, ", ", goal_p)
+    #         pickNplace(start_p, goal_p, cart=cart_home)
+    #         # pickNplace(start_idx, goal_idx, cart=cart_home)
+    # except KeyboardInterrupt:
+    #     pass
