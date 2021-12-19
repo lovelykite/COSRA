@@ -240,9 +240,8 @@ if __name__ == '__main__':
         print("q_home: ", q_home)
         print("Home [x, y, z] : ", np.round(cart_home, 3))
 
-        print(start_p, ", ", goal_p)
-        
         ''' Pick & Place '''
+        print(start_p, ", ", goal_p)
         pickNplace(start_p, goal_p, cart=cart_home)
 
     rospy.spin()
