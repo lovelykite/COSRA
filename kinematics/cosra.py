@@ -6,11 +6,13 @@ made by: Yeon Kang, and Jeong-woo Hong
 
 # Description
 1. Trajectories
+    - Traejectories are generated based on Linear Segment with Parabolic Blend (LSPB) method
+    - Time step (t_step = 0.07) for LSPB is set based on calculation time of 'move_joint' function
+    
 1.1. Cartesian Space: End-effector Cartesian Trajectories
     - Cartesian coordinates of end-effector is predefined based on each color section which is indexed as number 1 to 6
         - Start Upper Position, Start Lower Position, Goal Upper Position, Goal Lower Position
     - Initial Position, and Home Position are set so as not to disturb RGB Camera visual range
-    - While 
     
 1.2. Joint Space: Required Joints Position (angle) Trajectories
     - Based on cartesian trajectories, required joint position trajectories are obtained by Inverse Kinematics
@@ -18,7 +20,8 @@ made by: Yeon Kang, and Jeong-woo Hong
    
 2. Colored Box Sorting Process
      - With Image Processing, information about which box should be picked up (start_p), and where should it be placed (goal_p)
-     is 
+     is trasmitted as arguments to 'pickNplace' function
+     - If COSRA accomplished sorting process, it shows ceremony
     
 """
 
@@ -106,16 +109,12 @@ def pickNplace(start_idx, goal_idx, cart=[]):
         ''' Cartesian Trajectories '''
         traj_s1, t1 = Trajectory.LSPB(q0=cart_home, qf=center, tf=tf, tb=tf / 3)  # Path 1: Home to Center
         traj_s2, t2 = Trajectory.LSPB(q0=center, qf=start_upper, tf=tf, tb=tf / 3)  # Path 2: Center to Start upper
-        traj_s3, t3 = Trajectory.LSPB(q0=start_upper, qf=start_lower, tf=tf,
-                                      tb=tf / 3)  # Path 3: Start upper to Start lower
-        traj_s4, t4 = Trajectory.LSPB(q0=start_lower, qf=start_upper, tf=tf,
-                                      tb=tf / 3)  # Path 4: Start lower to Start upper
+        traj_s3, t3 = Trajectory.LSPB(q0=start_upper, qf=start_lower, tf=tf, tb=tf / 3)  # Path 3: Start upper to Start lower
+        traj_s4, t4 = Trajectory.LSPB(q0=start_lower, qf=start_upper, tf=tf, tb=tf / 3)  # Path 4: Start lower to Start upper
         traj_s5, t5 = Trajectory.LSPB(q0=start_upper, qf=center, tf=tf, tb=tf / 3)  # Path 5: Start upper to Center
         traj_s6, t6 = Trajectory.LSPB(q0=center, qf=goal_upper, tf=tf, tb=tf / 3)  # Path 6: Cetner to Goal upper
-        traj_s7, t7 = Trajectory.LSPB(q0=goal_upper, qf=goal_lower, tf=tf,
-                                      tb=tf / 3)  # Path 7: Goal upper to Goal lower
-        traj_s8, t8 = Trajectory.LSPB(q0=goal_lower, qf=goal_upper, tf=tf,
-                                      tb=tf / 3)  # Path 8: Goal lower to Goal upper
+        traj_s7, t7 = Trajectory.LSPB(q0=goal_upper, qf=goal_lower, tf=tf, tb=tf / 3)  # Path 7: Goal upper to Goal lower
+        traj_s8, t8 = Trajectory.LSPB(q0=goal_lower, qf=goal_upper, tf=tf, tb=tf / 3)  # Path 8: Goal lower to Goal upper
         traj_s9, t9 = Trajectory.LSPB(q0=goal_upper, qf=center, tf=tf, tb=tf / 3)  # Path 9: Goal upper to Center
         traj_s10, t10 = Trajectory.LSPB(q0=center, qf=cart_home, tf=tf, tb=tf / 3)  # Path 10: Center to Home
 
@@ -175,7 +174,7 @@ def move_joint(traj_s, t, pos_num):
 
 
 ''' Angle value Conversion b/w Pulse value & Radian '''
-# dxl position: 0 ~ 4095 (0 degree at 2048)
+# dxl position: 0 ~ 4095 (pi rad at 2048)
 def dxlPos2rad(pos=[]):
     joints = 2 * np.array(pos) * np.pi / 4095
     return joints
