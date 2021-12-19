@@ -1,7 +1,6 @@
 import numpy as np
 from numpy import sin, cos
 
-# from cosra import *
 import cosraVar
 from cosraVar import l1, l2, l3
 
