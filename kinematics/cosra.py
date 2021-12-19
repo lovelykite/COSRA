@@ -1,10 +1,25 @@
 """
-/*** Pick & Place Algorithm ***/
-1. Trajectories:
+### Pick & Place Algorithm ###
+# Copyright
+update: 2021.12.19
+made by: Yeon Kang, and Jeong-woo Hong
 
-1.1. Cartesian coordinates
-    - Obtained from
-
+# Description
+1. Trajectories
+1.1. Cartesian Space: End-effector Cartesian Trajectories
+    - Cartesian coordinates of end-effector is predefined based on each color section which is indexed as number 1 to 6
+        - Start Upper Position, Start Lower Position, Goal Upper Position, Goal Lower Position
+    - Initial Position, and Home Position are set so as not to disturb RGB Camera visual range
+    - While 
+    
+1.2. Joint Space: Required Joints Position (angle) Trajectories
+    - Based on cartesian trajectories, required joint position trajectories are obtained by Inverse Kinematics
+   
+   
+2. Colored Box Sorting Process
+     - With Image Processing, information about which box should be picked up (start_p), and where should it be placed (goal_p)
+     is 
+    
 """
 
 import time
@@ -27,7 +42,6 @@ def pickNplace(start_idx, goal_idx, cart=[]):
     ungripAngle = 2300  # Gripper angle for Releasing (0 ~ 4095)
 
     ''' Cartesian Space: Home, Start, Goal, Via points' Cartesian coordinates [x, y, z] '''
-    # home = [1460, 1500, 1590]       # home position Joint angle [pulse]
     cart_home = cart  # home position Cartesian coordinates [x, y, z]
     # print("cart_home: ", cart_home)
 
@@ -67,7 +81,7 @@ def pickNplace(start_idx, goal_idx, cart=[]):
 
     tf = 3.0  # time interval for Interpolation
 
-    if start_idx == 7 and goal_idx == 8:
+    if start_idx == 7 and goal_idx == 8:    # Checking whether colored box sorting operation is accomplished
         ''' Ceremony '''
         traj_sc1, tc1 = Trajectory.LSPB(q0=cart_home, qf=upper_7th, tf=tf, tb=tf / 3)
         traj_sc2, tc2 = Trajectory.LSPB(q0=upper_7th, qf=upper_8th, tf=tf, tb=tf / 3)
@@ -83,7 +97,7 @@ def pickNplace(start_idx, goal_idx, cart=[]):
 
         dxls.close_port()
         return
-    else:
+    else:   # Colored box sorting operation
         start_upper = upper[start_idx - 1][:]
         start_lower = lower[start_idx - 1][:]
         goal_upper  = upper[goal_idx - 1][:]
@@ -127,7 +141,7 @@ def pickNplace(start_idx, goal_idx, cart=[]):
         move_joint(traj_s9, t9, "9")
         move_joint(traj_s10, t10, "10")
 
-
+''' Dynamixel operation based on Inverse Kinematics '''
 def move_joint(traj_s, t, pos_num):
     print("move position " + pos_num)
 
@@ -172,10 +186,6 @@ def rad2dxlPos(joints=[]):
     return pos
 
 
-def initPosition():
-    initJoint = dxls.get_pos_sync(dxl_ids)
-    return initJoint
-
 start_p = None
 goal_p = None
 
@@ -187,7 +197,6 @@ def callback_joint(data):
 
 
 def listen_target():
-    
     rospy.Subscriber("send_goal", Int32MultiArray, callback_joint)
     rospy.spin()
 
@@ -209,13 +218,10 @@ if __name__ == '__main__':
             dxls.enable_torque(dxl_ids[i], True)  # Torque Enable
 
         ''' Initial Position Setting '''
-        # initPosition()
-        # dxls.set_pos_sync(dxl_ids, initPosition())
-
         initJoint = dxls.get_pos_sync(dxl_ids)
         dxls.set_pos_sync(dxl_ids, initJoint)
 
-        # cart_init = cosraKinematics.fk(dxlPos2rad(initPosition()[:3]))[:3, -1]
+        # cart_init = cosraKinematics.fk(dxlPos2rad(initJoint[:3]))[:3, -1]
         # print("Initial [x, y, z] : ", np.round(cart_init, 3))
 
         ''' Move from Initial Position to Home Position '''
@@ -228,15 +234,16 @@ if __name__ == '__main__':
             # start_time = time.time()
             q_home = dxls.get_pos_sync(dxl_ids)[:3]                     # pulse value for each joints in trajectories
             cart_home = cosraKinematics.fk(dxlPos2rad(q_home))[:3, -1]  # home cartesian coordinates
-            # cart_home = cosraKinematics.fk(dxlPos2rad(dxls.get_pos_sync(dxl_ids)[:3]))[:3, -1]
 
             for j in range(4):
                 dxls.set_pos(dxl_ids[j], int(traj_s0[i][j]))
-            # print("time: ", round(time.time() - start_time, 4), "traj_s :", np.round(traj_s0[i], 4))
+            # print("time: ", round(time.time() - start_time, 4), "traj_s0:", np.round(traj_s0[i], 4))
         print("q_home: ", q_home)
         print("Home [x, y, z] : ", np.round(cart_home, 3))
 
         print(start_p, ", ", goal_p)
+        
+        ''' Pick & Place '''
         pickNplace(start_p, goal_p, cart=cart_home)
 
     rospy.spin()
