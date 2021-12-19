@@ -246,17 +246,3 @@ if __name__ == '__main__':
         pickNplace(start_p, goal_p, cart=cart_home)
 
     rospy.spin()
-
-    # start_idx = 6
-    # goal_idx = 1
-
-    ''' Pick & Place '''
-    
-    # try:
-    #     while True:
-    #         listen_target()
-    #         print(start_p, ", ", goal_p)
-    #         pickNplace(start_p, goal_p, cart=cart_home)
-    #         # pickNplace(start_idx, goal_idx, cart=cart_home)
-    # except KeyboardInterrupt:
-    #     pass
