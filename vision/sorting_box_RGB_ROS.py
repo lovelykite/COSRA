@@ -91,7 +91,9 @@ def hue_detect(sub_img, i):
             x, y, w, h = cv2.boundingRect(contour) 
             imageFrame = cv2.rectangle(imageFrame, (x, y), (x + w, y + h), (255, 0, 0), 2) 
 
+#sorting_box algorithm
 def sorting_box(color_goal, frame):
+    #find wrong box
     if np.any(color_goal[0, :2] == 2) or np.any(color_goal[0, :2] == 3) or np.any(color_goal[0, 2:4] == 1) or np.any(color_goal[0, 2:4] == 3) or np.any(color_goal[0, 4:] == 1) or np.any(color_goal[0, 4:] == 2):
         try:
             empty = np.where(color_goal[0, :] == 0)
@@ -160,10 +162,12 @@ def sorting_box(color_goal, frame):
             print("Make an empty space!")        
 
     else:
+        #if all boxes are in right place
         cv2.putText(frame, 'Complete!', (310, 30), font, 1, (0, 0, 0), 3)
         # cv2.imshow('frame', frame)
         cv2.imshow('color', frame)
         print ("Sorting Box Complete!")
+        #sorting box ceremony
         start = 7
         goal = 8
         send_joints(start, goal)
@@ -176,6 +180,7 @@ def sorting_box(color_goal, frame):
 # cv2.createTrackbar('Min pixels', 'parameters', 100, 1500, callback)
 # cv2.createTrackbar('Max pixels', 'parameters', 323, 1500, callback)
 
+#ser rois
 rois = np.array([[382,189,85,85],
         [380,17,80,80],
         [269,195,85,85],
@@ -227,6 +232,7 @@ if __name__ == '__main__':
 
     while True: 
         rospy.init_node('vision', anonymous=True)
+        #listen flag ROS topic from control node
         listener = threading.Thread(target = listen_flag)
         listener.start()
 
