@@ -107,16 +107,16 @@ def pickNplace(start_idx, goal_idx, cart=[]):
         goal_lower  = lower[goal_idx - 1][:]
 
         ''' Cartesian Trajectories '''
-        traj_s1, t1 = Trajectory.LSPB(q0=cart_home, qf=center, tf=tf, tb=tf / 3)  # Path 1: Home to Center
-        traj_s2, t2 = Trajectory.LSPB(q0=center, qf=start_upper, tf=tf, tb=tf / 3)  # Path 2: Center to Start upper
-        traj_s3, t3 = Trajectory.LSPB(q0=start_upper, qf=start_lower, tf=tf, tb=tf / 3)  # Path 3: Start upper to Start lower
-        traj_s4, t4 = Trajectory.LSPB(q0=start_lower, qf=start_upper, tf=tf, tb=tf / 3)  # Path 4: Start lower to Start upper
-        traj_s5, t5 = Trajectory.LSPB(q0=start_upper, qf=center, tf=tf, tb=tf / 3)  # Path 5: Start upper to Center
-        traj_s6, t6 = Trajectory.LSPB(q0=center, qf=goal_upper, tf=tf, tb=tf / 3)  # Path 6: Cetner to Goal upper
-        traj_s7, t7 = Trajectory.LSPB(q0=goal_upper, qf=goal_lower, tf=tf, tb=tf / 3)  # Path 7: Goal upper to Goal lower
-        traj_s8, t8 = Trajectory.LSPB(q0=goal_lower, qf=goal_upper, tf=tf, tb=tf / 3)  # Path 8: Goal lower to Goal upper
-        traj_s9, t9 = Trajectory.LSPB(q0=goal_upper, qf=center, tf=tf, tb=tf / 3)  # Path 9: Goal upper to Center
-        traj_s10, t10 = Trajectory.LSPB(q0=center, qf=cart_home, tf=tf, tb=tf / 3)  # Path 10: Center to Home
+        traj_s1, t1 = Trajectory.LSPB(q0=cart_home,   qf=center,      tf=tf, tb=tf / 3)     # Path 1: Home to Center
+        traj_s2, t2 = Trajectory.LSPB(q0=center,      qf=start_upper, tf=tf, tb=tf / 3)     # Path 2: Center to Start upper
+        traj_s3, t3 = Trajectory.LSPB(q0=start_upper, qf=start_lower, tf=tf, tb=tf / 3)     # Path 3: Start upper to Start lower
+        traj_s4, t4 = Trajectory.LSPB(q0=start_lower, qf=start_upper, tf=tf, tb=tf / 3)     # Path 4: Start lower to Start upper
+        traj_s5, t5 = Trajectory.LSPB(q0=start_upper, qf=center,      tf=tf, tb=tf / 3)     # Path 5: Start upper to Center
+        traj_s6, t6 = Trajectory.LSPB(q0=center,      qf=goal_upper,  tf=tf, tb=tf / 3)     # Path 6: Cetner to Goal upper
+        traj_s7, t7 = Trajectory.LSPB(q0=goal_upper,  qf=goal_lower,  tf=tf, tb=tf / 3)     # Path 7: Goal upper to Goal lower
+        traj_s8, t8 = Trajectory.LSPB(q0=goal_lower,  qf=goal_upper,  tf=tf, tb=tf / 3)     # Path 8: Goal lower to Goal upper
+        traj_s9, t9 = Trajectory.LSPB(q0=goal_upper,  qf=center,      tf=tf, tb=tf / 3)     # Path 9: Goal upper to Center
+        traj_s10, t10 = Trajectory.LSPB(q0=center,    qf=cart_home,   tf=tf, tb=tf / 3)     # Path 10: Center to Home
 
         ''' Joint Trajectories: Dynamixel Operation '''
         move_joint(traj_s1, t1, "1")
