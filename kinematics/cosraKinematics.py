@@ -22,6 +22,7 @@ class cosraKinematics:
                         [0, 0, 0, 1]]) for [alpha, a, d, theta] in dhparams]
         return Ts
 
+    ''' Forward Kinematics '''
     @classmethod
     def fk(cls, joints):
         Ts = cosraKinematics.DH_transform(cosraVar.dhparam(joints))  # T01, T12, T23, T3e
@@ -31,13 +32,16 @@ class cosraKinematics:
         # Tbs[-1]: from base to end effector
         return Tbs[-1]
 
-    # analytical solution
+    ''' Inverse Kinematics: Both analytical & geometrical solution are valid '''
+    # Analytical solution
     @classmethod
     def ik(cls, q, *cart_des):
         x, y, z = cart_des
         # print("x coord: ", x, " y coord: ", y, " z coord: ", z)
 
         q1, q2, q3 = q
+        
+        # Compensation for dynamixel initial position and initial manipulator configuration
         q1 -= np.pi
         q2 = q2 - np.pi + 30 * np.pi / 180
         q3 = q3 - np.pi - 50 * np.pi / 180
@@ -50,12 +54,14 @@ class cosraKinematics:
         # print("q1: ", q1, "q2: ", q2, "q3: ", q3,)
         return F  # return required joint angles [rad]
 
-    # geometrical solution
+    # Geometrical solution
     @classmethod
     def ik_geo(cls, q, *cart_des):
         x, y, z = cart_des
 
         q1, q2, q3 = q
+
+        # Compensation for dynamixel initial position and initial manipulator configuration
         q1 -= np.pi
         q2 = q2 - np.pi + 30 * np.pi / 180
         q3 = q3 - np.pi - 50 * np.pi / 180
