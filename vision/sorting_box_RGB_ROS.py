@@ -58,6 +58,8 @@ def hue_detect(sub_img, i):
 
     #############################################################
         
+    # mask the color    
+    
     kernal = np.ones((5, 5), "uint8") 
 
     red_mask = cv2.dilate(red_mask, kernal) 
@@ -173,7 +175,7 @@ def sorting_box(color_goal, frame):
         send_joints(start, goal)
         return start, goal
         
-# find parameters with Trackbar
+# Find parameters with Trackbar
 # cv2.namedWindow('parameters')
 # cv2.createTrackbar('Threshold1', 'parameters', 186, 700, callback)
 # cv2.createTrackbar('Threshold2', 'parameters', 122, 700, callback)
