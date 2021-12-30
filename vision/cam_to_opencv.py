@@ -8,6 +8,8 @@ import cv2
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 
+# ros topic -> CvBridge -> opencv
+
 class image_converter:
 
   def __init__(self):
