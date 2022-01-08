@@ -6,7 +6,7 @@ Created on Tue Dec  4 01:41:32 2018
 """
 
 import sys
-# sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
+# to solve error, sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')
 
 from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import QTimer
