@@ -26,6 +26,9 @@
 # Find HSV range for different environment (HSV range changes with light)
 python ColorDetectionGUI.py
 
+# Start ROS master node
+roscore
+
 # Set new HSV range and run code
 rosrun cosra sorting_box_RGB_ROS.py
 
