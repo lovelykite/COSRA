@@ -20,3 +20,15 @@
 # Demo Video
 
 [![Demo Video](https://img.youtube.com/vi/3jai4bOfBLw/0.jpg)](https://www.youtube.com/watch?v=3jai4bOfBLw)
+
+# Run Code
+```
+# Find HSV range for different environment (HSV range changes with light)
+python ColorDetectionGUI.py
+
+# Set new HSV range and run code
+rosrun cosra sorting_box_RGB_ROS.py
+
+# Run COSRA and sorting RGB boxes
+rosrun cosra cosra.py 
+```
